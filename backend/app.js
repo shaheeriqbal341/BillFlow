@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { connectDB, getConnectionFailure } = require('./config/db');
+const { getAllowedOrigins } = require('./config/cors');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const businessRoutes = require('./routes/businessRoutes');
@@ -19,13 +20,16 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+const allowedOrigins = getAllowedOrigins();
 
 app.set('trust proxy', 1);
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => callback(null, origin ? allowedOrigins.has(origin) : false),
     credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    optionsSuccessStatus: 204,
   }),
 );
 app.use(helmet());

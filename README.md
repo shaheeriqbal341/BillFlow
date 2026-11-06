@@ -35,7 +35,7 @@ Configure `backend/.env` (copy from `backend/.env.example`) with:
 
 - `MONGODB_URI`: MongoDB Atlas URI or another MongoDB URI for the `billflow` database
 - `JWT_SECRET`: long, private random signing key
-- `CLIENT_URL`: allowed frontend origin, normally `http://localhost:5173`
+- `CLIENT_URL`: comma-separated allowed frontend origins without paths, normally `http://localhost:5173`
 - `PORT`: optional API port; defaults to `5000`
 - `NODE_ENV`: `development` or `production` for a normal server
 
@@ -65,7 +65,7 @@ The backend listens on port 5000 unless `PORT` is configured. Check `GET http://
 
 ## Deploy the backend to Vercel
 
-Set the Vercel project's Root Directory to `backend` and deploy the Express app exported from `app.js`. Add `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_URL` to the Vercel environment for each deployment target you use (Production, Preview, or Development). `MONGODB_URI` must be available to the function at runtime; add the deployment's outbound network access to MongoDB Atlas Network Access as required by the cluster.
+Set the Vercel project's Root Directory to `backend` and deploy the Express app exported from `app.js`. Set the backend environment variable `CLIENT_URL` to exactly `https://bill-flow-cdly.vercel.app` (no trailing slash and no `/api`). Additional approved frontend origins may be comma-separated, but each value must be an origin with no path. `https://bill-flow-cdly.vercel.app` is also explicitly allowed by the backend. Add `MONGODB_URI` and `JWT_SECRET` to the Vercel environment for each deployment target you use (Production, Preview, or Development). `MONGODB_URI` must be available to the function at runtime; add the deployment's outbound network access to MongoDB Atlas Network Access as required by the cluster.
 
 Vercel supplies `VERCEL=1`. The Express app trusts one proxy hop for `X-Forwarded-For` and initializes MongoDB on the first API request, including `/api/health`. After deployment, request `https://<deployment-host>/api/health`; expect HTTP 200 with `database: "connected"`. A 503 indicates the database connection is missing or unavailable; use the sanitized Vercel function logs to distinguish missing configuration, URI format, authentication, DNS, timeout, or network-access failures. Never put the URI or credentials in logs or support messages.
 
