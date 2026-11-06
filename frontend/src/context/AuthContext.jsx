@@ -28,18 +28,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async ({ email, password }) => {
     const { data } = await api.post('/auth/login', { email, password });
-    setUser(data.user);
-    setBusiness(data.business);
+    const { data: session } = await api.get('/auth/me');
+    setUser(session.user);
+    setBusiness(session.business);
     setConnectionError('');
-    return data;
+    return { ...data, user: session.user, business: session.business };
   };
 
   const register = async (payload) => {
     const { data } = await api.post('/auth/register', payload);
-    setUser(data.user);
-    setBusiness(data.business);
+    const { data: session } = await api.get('/auth/me');
+    setUser(session.user);
+    setBusiness(session.business);
     setConnectionError('');
-    return data;
+    return { ...data, user: session.user, business: session.business };
   };
 
   const logout = async () => {

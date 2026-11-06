@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { connectDB, getConnectionFailure } = require('./config/db');
 const { getAllowedOrigins } = require('./config/cors');
+const { csrfProtection } = require('./middleware/csrf');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const businessRoutes = require('./routes/businessRoutes');
@@ -29,6 +30,7 @@ app.use(
     origin: (origin, callback) => callback(null, origin ? allowedOrigins.has(origin) : false),
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-BillFlow-Client'],
     optionsSuccessStatus: 204,
   }),
 );
@@ -73,6 +75,7 @@ app.use('/api', async (req, res, next) => {
   }
 });
 
+app.use('/api', csrfProtection);
 app.use('/api/auth', authRoutes);
 app.use('/api/business', businessRoutes);
 app.use('/api/customers', customerRoutes);

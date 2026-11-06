@@ -27,13 +27,15 @@ describe('CORS configuration', () => {
       .options('/api/auth/login')
       .set('Origin', PRODUCTION_FRONTEND_ORIGIN)
       .set('Access-Control-Request-Method', 'POST')
-      .set('Access-Control-Request-Headers', 'content-type,authorization,x-xsrf-token');
+      .set('Access-Control-Request-Headers', 'content-type,authorization,x-csrf-token');
 
     expect(response.status).toBe(204);
     expect(response.headers['access-control-allow-origin']).toBe(PRODUCTION_FRONTEND_ORIGIN);
     expect(response.headers['access-control-allow-credentials']).toBe('true');
     expect(response.headers['access-control-allow-methods']).toContain('POST');
-    expect(response.headers['access-control-allow-headers']).toBe('content-type,authorization,x-xsrf-token');
+    expect(response.headers['access-control-allow-headers']).toBe(
+      'Content-Type,Authorization,X-CSRF-Token,X-BillFlow-Client',
+    );
   });
 
   it('accepts multiple origins with trailing slashes but rejects API paths', () => {

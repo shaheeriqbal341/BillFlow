@@ -6,6 +6,7 @@ const Subscription = require('../models/Subscription');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 const { ensureDefaultPlans } = require('../services/subscriptionService');
 const BUSINESS_TYPES = require('../constants/businessTypes');
+const { getCookieOptions, clearCsrfCookie } = require('../middleware/csrf');
 
 const generateToken = (userId) => {
   if (!process.env.JWT_SECRET) {
@@ -79,12 +80,7 @@ const register = async (req, res, next) => {
     });
 
     const token = generateToken(user._id);
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', token, getCookieOptions());
 
     res.status(201).json({
       success: true,
@@ -135,12 +131,7 @@ const login = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', token, getCookieOptions());
 
     res.status(200).json({
       success: true,
@@ -172,12 +163,7 @@ const adminLogin = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie('token', token, getCookieOptions());
 
     return res.json({
       success: true,
@@ -190,11 +176,9 @@ const adminLogin = async (req, res, next) => {
 };
 
 const logout = (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-  });
+  const { maxAge, ...cookieOptions } = getCookieOptions();
+  res.clearCookie('token', cookieOptions);
+  clearCsrfCookie(res);
   res.json({ success: true, message: 'Logged out successfully' });
 };
 

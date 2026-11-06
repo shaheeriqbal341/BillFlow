@@ -36,7 +36,11 @@ describe('Vercel proxy and request startup', () => {
     await request(app).get('/api/health').set(proxyHeaders).expect(503).expect((response) => {
       expect(response.body.database).toBe('disconnected');
     });
-    await request(app).post('/api/auth/login').set(proxyHeaders).send({}).expect(400);
+    await request(app).post('/api/auth/login')
+      .set(proxyHeaders)
+      .set('X-BillFlow-Client', 'mobile')
+      .send({})
+      .expect(400);
 
     expect(errorLog).not.toHaveBeenCalled();
     errorLog.mockRestore();

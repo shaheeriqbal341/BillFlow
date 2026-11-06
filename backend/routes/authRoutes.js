@@ -1,10 +1,12 @@
 const express = require('express');
 const { register, login, adminLogin, logout, getProfile } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
+const { issueCsrfToken } = require('../middleware/csrf');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
+router.get('/csrf', issueCsrfToken);
 router.post('/register', rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
