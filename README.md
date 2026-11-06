@@ -63,6 +63,12 @@ npm.cmd run dev
 
 The backend listens on port 5000 unless `PORT` is configured. Check `GET http://localhost:5000/api/health`; it returns success only when MongoDB is connected. If the API is unavailable, the frontend reports the connection problem instead of substituting fake data.
 
+## Deploy the backend to Vercel
+
+Set the Vercel project's Root Directory to `backend` and deploy the Express app exported from `app.js`. Add `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_URL` to the Vercel environment for each deployment target you use (Production, Preview, or Development). `MONGODB_URI` must be available to the function at runtime; add the deployment's outbound network access to MongoDB Atlas Network Access as required by the cluster.
+
+Vercel supplies `VERCEL=1`. The Express app trusts one proxy hop for `X-Forwarded-For` and initializes MongoDB on the first API request, including `/api/health`. After deployment, request `https://<deployment-host>/api/health`; expect HTTP 200 with `database: "connected"`. A 503 indicates the database connection is missing or unavailable; use the sanitized Vercel function logs to distinguish missing configuration, URI format, authentication, DNS, timeout, or network-access failures. Never put the URI or credentials in logs or support messages.
+
 ## Initial setup: plans and Super Admin
 
 Seed Free, Starter, and Professional plans. The command is idempotent and preserves existing plan settings:

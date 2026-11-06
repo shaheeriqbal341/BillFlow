@@ -5,6 +5,14 @@ const { getMongoUri } = require('./env');
 let mongoMemoryServer;
 
 function getConnectionFailure(error) {
+  const firstMessage = error?.message || '';
+  if (/MONGODB_URI is required/i.test(firstMessage)) {
+    return 'MONGODB_URI is missing from the backend environment.';
+  }
+  if (/MONGODB_URI is invalid|MONGODB_URI must use/i.test(firstMessage)) {
+    return 'MONGODB_URI is malformed or uses an unsupported protocol.';
+  }
+
   const chain = [];
   let current = error;
   while (current && !chain.includes(current)) {
@@ -82,4 +90,4 @@ async function disconnectDB() {
   }
 }
 
-module.exports = { connectDB, disconnectDB };
+module.exports = { connectDB, disconnectDB, getConnectionFailure };

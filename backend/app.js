@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const { connectDB, getConnectionFailure } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/authRoutes');
 const businessRoutes = require('./routes/businessRoutes');
@@ -18,6 +19,8 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+
+app.set('trust proxy', 1);
 
 app.use(
   cors({
@@ -38,8 +41,33 @@ app.use(
     max: 120,
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { forwardedHeader: false },
   }),
 );
+
+let vercelDatabaseConnection;
+app.use('/api', async (req, res, next) => {
+  if (process.env.VERCEL !== '1' || process.env.NODE_ENV === 'test' || mongoose.connection.readyState === 1) {
+    return next();
+  }
+
+  try {
+    if (!vercelDatabaseConnection) {
+      vercelDatabaseConnection = connectDB()
+        .catch((error) => {
+          console.error(getConnectionFailure(error));
+          throw error;
+        })
+        .finally(() => {
+          vercelDatabaseConnection = null;
+        });
+    }
+    await vercelDatabaseConnection;
+    return next();
+  } catch {
+    return res.status(503).json({ success: false, status: 'unavailable', database: 'disconnected' });
+  }
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/business', businessRoutes);
@@ -58,7 +86,8 @@ app.get('/api/health', async (req, res) => {
   try {
     await mongoose.connection.db.admin().ping();
     return res.json({ success: true, status: 'healthy', database: 'connected' });
-  } catch {
+  } catch (error) {
+    console.error(`MongoDB health check failed: ${getConnectionFailure(error)}`);
     return res.status(503).json({ success: false, status: 'unavailable', database: 'unreachable' });
   }
 });
