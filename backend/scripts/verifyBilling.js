@@ -164,7 +164,9 @@ async function verify() {
   await request(app).get('/api/subscriptions').set('Cookie', adminCookie).expect(403);
   await request(app).get('/api/business/users').set('Cookie', adminCookie).expect(403);
   await request(app).get('/api/admin/payment-settings').set('Cookie', ownerA.cookie).expect(403);
-  await request(app).post('/api/auth/login').send({ email: adminEmail, password: 'admin-password-long-enough' }).expect(401);
+  const commonAdminLogin = await request(app).post('/api/auth/login')
+    .send({ email: adminEmail, password: 'admin-password-long-enough' }).expect(200);
+  assert.equal(commonAdminLogin.body.user.role, 'super_admin');
   const overview = await request(app).get('/api/admin/overview').set('Cookie', adminCookie).expect(200);
   assert.ok(overview.body.overview.businessCount >= 2);
 

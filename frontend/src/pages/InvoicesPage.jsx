@@ -74,21 +74,33 @@ export default function InvoicesPage() {
     setError('');
     try {
       const response = await api.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const pdf = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' });
+      const signature = new Uint8Array(await pdf.slice(0, 5).arrayBuffer());
+      if (
+        !pdf.type.toLowerCase().includes('application/pdf')
+        || String.fromCharCode(...signature) !== '%PDF-'
+      ) {
+        throw new Error('The server did not return a valid invoice PDF. Please try again.');
+      }
+      const url = window.URL.createObjectURL(pdf);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `invoice-${invoiceId}.pdf`;
+      link.download = `invoice-${String(invoiceId).replace(/[^a-z0-9_-]/gi, '-')}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Failed to download PDF');
+      setError(requestError.message || requestError.response?.data?.message || 'Failed to download PDF');
     }
   };
 
   const createInvoice = async (event) => {
     event.preventDefault();
+    if (!Number.isFinite(Number(paidAmount)) || Number(paidAmount) < 0 || Number(paidAmount) > total) {
+      setError('Paid amount must be between zero and the invoice total.');
+      return;
+    }
     setSaving(true);
     setError('');
     setNotice('');
@@ -182,7 +194,7 @@ export default function InvoicesPage() {
             <div className="entity-form-grid">
               <label>Discount amount<NumberInput min="0" max={subtotal} step="0.01" value={discount} onChange={(event) => setDiscount(event.target.value)} /></label>
               <label>Tax rate (%)<NumberInput min="0" max="100" step="0.01" value={tax} onChange={(event) => setTax(event.target.value)} /></label>
-              <label>Paid now<NumberInput min="0" max={total} step="0.01" value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /></label>
+              <label>Paid now<div className="paid-now-control"><NumberInput min="0" max={total} step="0.01" value={paidAmount} onChange={(event) => setPaidAmount(event.target.value)} /><button className="btn btn-sm btn-outline-secondary" type="button" onClick={() => setPaidAmount(total.toFixed(2))}>Total Paid</button></div></label>
               <label>Payment method<select value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}><option>Cash</option><option>Bank Transfer</option><option>Card</option><option>Other</option></select></label>
               <label className="wide-field">Notes<textarea rows="2" value={notes} onChange={(event) => setNotes(event.target.value)} /></label>
               <div className="wide-field invoice-total-preview">Subtotal: PKR {subtotal.toLocaleString()} · Estimated total: PKR {total.toFixed(2)}</div>

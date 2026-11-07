@@ -287,60 +287,102 @@ const downloadInvoicePdf = async (req, res, next) => {
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 40;
     const currency = invoice.businessId?.currency || 'PKR';
-    const formatAmount = (value) => `${currency} ${Number(value || 0).toLocaleString()}`;
+    const formatAmount = (value) => `${currency} ${Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const business = invoice.businessId || {};
+    const customer = invoice.customerId || {};
+    const logoMatch = String(business.logo || '').match(/^data:image\/(png|jpeg);base64,/);
 
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
     doc.setTextColor(15, 23, 42);
-    const business = invoice.businessId || {};
-    doc.text(business.name || 'BillFlow Invoice', margin, 60);
-    const logoMatch = String(business.logo || '').match(/^data:image\/(png|jpeg);base64,/);
-    if (logoMatch) doc.addImage(business.logo, logoMatch[1].toUpperCase(), pageWidth - 125, 35, 85, 44);
+    const businessNameLines = doc.splitTextToSize(business.name || 'BillFlow Invoice', logoMatch ? 360 : pageWidth - margin * 2);
+    doc.text(businessNameLines, margin, 60);
+    if (logoMatch) {
+      try {
+        doc.addImage(business.logo, logoMatch[1].toUpperCase(), pageWidth - 125, 35, 85, 44);
+      } catch {
+        console.warn('An invalid business logo was omitted from the invoice PDF.');
+      }
+    }
 
-    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.setTextColor(71, 85, 105);
-    doc.text(`Invoice #${invoice.invoiceNumber}`, margin, 84);
-    doc.text(`Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}`, margin, 100);
-    doc.text(`Due: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}`, margin, 116);
-    const businessDetails = [business.address, [business.city, business.country].filter(Boolean).join(', '), business.phone, business.email].filter(Boolean);
-    businessDetails.forEach((detail, index) => doc.text(String(detail).slice(0, 100), margin, 132 + index * 14));
+    const invoiceDate = new Date(invoice.invoiceDate || invoice.createdAt);
+    const invoiceDetails = [
+      `Invoice #${invoice.invoiceNumber}`,
+      `Date: ${Number.isNaN(invoiceDate.getTime()) ? 'N/A' : invoiceDate.toLocaleDateString()}`,
+      `Due: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}`,
+    ];
+    let businessY = Math.max(84, 60 + businessNameLines.length * 23);
+    invoiceDetails.forEach((detail) => {
+      const lines = doc.splitTextToSize(detail, 360);
+      doc.text(lines, margin, businessY);
+      businessY += lines.length * 13;
+    });
 
-    const customer = invoice.customerId || {};
+    const businessDetails = [
+      business.address,
+      [business.city, business.country].filter(Boolean).join(', '),
+      business.phone,
+      business.email,
+    ].filter(Boolean);
+    businessDetails.forEach((detail) => {
+      const lines = doc.splitTextToSize(String(detail), 360);
+      doc.text(lines, margin, businessY);
+      businessY += lines.length * 12;
+    });
+
+    const customerY = Math.max(192, businessY + 12);
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
-    doc.text('Bill to', margin, 192);
+    doc.text('Bill to', margin, customerY);
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(51, 65, 85);
-    doc.text(customer.name || 'Unknown Customer', margin, 210);
-    if (customer.email) doc.text(customer.email, margin, 224);
-    if (customer.phone) doc.text(customer.phone, margin, 238);
+    let customerDetailY = customerY + 18;
+    [customer.name || 'Unknown Customer', customer.email, customer.phone, customer.address].filter(Boolean).forEach((detail) => {
+      const lines = doc.splitTextToSize(String(detail), 240);
+      doc.text(lines, margin, customerDetailY);
+      customerDetailY += lines.length * 13;
+    });
 
+    const statusX = pageWidth - margin;
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
-    doc.text('Payment status', pageWidth - 150, 192);
+    doc.text('Payment status', statusX, customerY, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(22, 163, 74);
-    doc.text(invoice.paymentStatus || 'draft', pageWidth - 150, 210);
+    doc.text(invoice.paymentStatus || 'draft', statusX, customerY + 18, { align: 'right' });
     doc.setTextColor(51, 65, 85);
-    doc.text(`Payment method: ${invoice.paymentMethod || 'Not recorded'}`, pageWidth - 220, 226);
+    doc.text(`Payment method: ${invoice.paymentMethod || 'Not recorded'}`, statusX, customerY + 34, { align: 'right' });
 
-    let y = 270;
+    const quantityX = pageWidth - 245;
+    const priceX = pageWidth - 145;
+    const totalX = pageWidth - margin;
+    let y = Math.max(customerDetailY, customerY + 52) + 20;
     const drawItemsHeader = () => {
       doc.setDrawColor(203, 213, 225);
       doc.line(margin, y, pageWidth - margin, y);
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(15, 23, 42);
       doc.text('Item / service', margin, y + 22);
-      doc.text('Qty', 300, y + 22);
-      doc.text('Price', 380, y + 22);
-      doc.text('Total', 470, y + 22);
+      doc.text('Qty', quantityX, y + 22, { align: 'right' });
+      doc.text('Price', priceX, y + 22, { align: 'right' });
+      doc.text('Total', totalX, y + 22, { align: 'right' });
       doc.line(margin, y + 30, pageWidth - margin, y + 30);
       y += 48;
     };
     drawItemsHeader();
-    invoice.items.forEach((item) => {
+    (invoice.items || []).forEach((item) => {
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(51, 65, 85);
-      const lines = doc.splitTextToSize(item.productName || 'Product', 170);
+      const lines = doc.splitTextToSize(item.productName || 'Product', 210);
       const detailParts = [
         item.variantLabel,
         item.productDetails?.brand,
@@ -354,9 +396,9 @@ const downloadInvoicePdf = async (req, res, next) => {
           return `${key.replace(/([A-Z])/g, ' $1')}: ${renderedValue}`;
         }),
       ].filter(Boolean);
-      const details = detailParts.length ? doc.splitTextToSize(detailParts.join(' · '), 170) : [];
+      const details = detailParts.length ? doc.splitTextToSize(detailParts.join(' · '), 210) : [];
       const rowHeight = Math.max(22, lines.length * 12) + details.length * 10;
-      if (y + rowHeight > pageHeight - 80) {
+      if (y + rowHeight > pageHeight - 60) {
         doc.addPage();
         y = 50;
         drawItemsHeader();
@@ -366,36 +408,42 @@ const downloadInvoicePdf = async (req, res, next) => {
         doc.setFontSize(8);
         doc.text(details, margin, y + Math.max(11, lines.length * 11));
       }
-      doc.text(String(item.quantity || 0), 300, y);
-      doc.text(formatAmount(item.unitPrice), 380, y);
-      doc.text(formatAmount(item.lineTotal), 470, y);
+      doc.setFontSize(9);
+      doc.text(`${item.quantity || 0}${item.unit ? ` ${item.unit}` : ''}`, quantityX, y, { align: 'right' });
+      doc.text(formatAmount(item.unitPrice), priceX, y, { align: 'right' });
+      doc.text(formatAmount(item.lineTotal), totalX, y, { align: 'right' });
       y += rowHeight + 8;
     });
 
     y += 12;
-    if (y + 170 > pageHeight - 40) {
+    if (y + 170 > pageHeight - margin) {
       doc.addPage();
       y = 50;
     }
     doc.line(margin, y, pageWidth - margin, y);
-    doc.text('Subtotal', 380, y + 22);
-    doc.text(formatAmount(invoice.subtotal), 470, y + 22);
-    doc.text('Tax', 380, y + 38);
-    doc.text(formatAmount(invoice.taxTotal), 470, y + 38);
-    doc.text('Discount', 380, y + 54);
-    doc.text(formatAmount(invoice.discountTotal), 470, y + 54);
-    doc.setFontSize(11);
-    doc.setTextColor(15, 23, 42);
-    doc.text('Grand Total', 380, y + 82);
-    doc.text(formatAmount(invoice.grandTotal), 470, y + 82);
-    doc.setFontSize(10);
-    doc.text('Paid', 380, y + 100);
-    doc.text(formatAmount(invoice.paidAmount), 470, y + 100);
-    doc.text('Balance due', 380, y + 116);
-    doc.text(formatAmount(invoice.remainingAmount), 470, y + 116);
+    const summaryRows = [
+      ['Subtotal', invoice.subtotal],
+      ['Tax', invoice.taxTotal],
+      ['Discount', invoice.discountTotal],
+      ['Grand Total', invoice.grandTotal],
+      ['Paid', invoice.paidAmount],
+      ['Balance due', invoice.remainingAmount],
+    ];
+    summaryRows.forEach(([label, amount], index) => {
+      const isGrandTotal = label === 'Grand Total';
+      doc.setFont('helvetica', isGrandTotal ? 'bold' : 'normal');
+      doc.setFontSize(isGrandTotal ? 11 : 10);
+      doc.setTextColor(15, 23, 42);
+      const rowY = y + 22 + index * (isGrandTotal ? 18 : 16);
+      doc.text(label, priceX - 20, rowY, { align: 'right' });
+      doc.text(formatAmount(amount), totalX, rowY, { align: 'right' });
+    });
     if (invoice.notes) {
+      const notes = doc.splitTextToSize(`Notes: ${String(invoice.notes)}`, pageWidth - margin * 2);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
       doc.setTextColor(71, 85, 105);
-      doc.text(`Notes: ${String(invoice.notes).slice(0, 160)}`, margin, y + 145);
+      doc.text(notes, margin, y + 22 + summaryRows.length * 16);
     }
 
     const buffer = doc.output('arraybuffer');
