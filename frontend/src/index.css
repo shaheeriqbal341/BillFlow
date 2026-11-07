@@ -1187,20 +1187,19 @@ button, .btn {
 }
 .receipt-print-root h1 { margin: 0 0 4px; text-align: center; font-size: 15px; font-weight: 800; line-height: 1.15; }
 .receipt-print-root .receipt-business-name { color: #000; font-weight: 800; }
-.receipt-print-root .receipt-title { font-weight: 400; }
 .receipt-print-root .receipt-customer { font-weight: 800; }
 .receipt-print-root p { margin: 2px 0; text-align: center; }
 .receipt-print-root hr { border: 0; border-top: 1px dashed #555; margin: 7px 0; }
 .receipt-logo { display: block; width: auto; max-width: 35mm; max-height: 12mm; margin: 0 auto 6px; object-fit: contain; }
 .receipt-item { margin: 5px 0; }
-.receipt-table-heading, .receipt-item-grid { display: grid; grid-template-columns: minmax(0, 1fr) 8mm 15mm; gap: 1mm; align-items: start; }
+.receipt-table-heading, .receipt-item-grid { display: grid; grid-template-columns: minmax(0, 1fr) 6mm 8mm 14mm; gap: .5mm; align-items: start; }
 .receipt-table-heading { margin-bottom: 4px; border-bottom: 1px dashed #555; padding-bottom: 3px; }
+.receipt-table-heading > :nth-child(2), .receipt-table-heading > :nth-child(3) { text-align: center; }
+.receipt-table-heading > :last-child { text-align: right; }
 .receipt-item-grid > :first-child { min-width: 0; overflow-wrap: anywhere; }
-.receipt-item-grid > :nth-child(2) { text-align: center; overflow-wrap: anywhere; }
+.receipt-item-grid > :nth-child(2), .receipt-item-grid > :nth-child(3) { text-align: center; overflow-wrap: anywhere; }
 .receipt-item-grid > :last-child { text-align: right; overflow-wrap: anywhere; }
 .receipt-item > small { display: block; overflow-wrap: anywhere; }
-.receipt-item-meta { margin-top: 2px; }
-.receipt-item-total { display: flex !important; justify-content: flex-end; gap: 5px; font-weight: 600; }
 .receipt-print-root dl { margin: 6px 0; }
 .receipt-print-root dl > div { display: flex; align-items: baseline; gap: 5px; }
 .receipt-print-root dt, .receipt-print-root dd { min-width: 0; margin: 2px 0; overflow-wrap: anywhere; }
@@ -1234,7 +1233,6 @@ button, .btn {
   .receipt-print-root, .receipt-print-root * { visibility: visible !important; }
   .receipt-print-root { position: relative !important; width: 48mm !important; min-height: 0 !important; margin: 0 !important; padding: 2mm 0 1mm !important; box-shadow: none !important; page-break-inside: auto; }
   .receipt-print-root .receipt-business-name { color: #000 !important; font-weight: 800 !important; }
-  .receipt-print-root .receipt-title { font-weight: 400 !important; }
   .receipt-print-root .receipt-customer { font-weight: 800 !important; }
 }
 :root[data-theme='dark'] .customer-toolbar input,
