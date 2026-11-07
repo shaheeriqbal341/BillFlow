@@ -130,6 +130,7 @@ export default function ReportsPage() {
           </section>
           <div className="table-card">
             <table>
+            
               <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th></tr></thead>
               <tbody>
                 {report.invoices.map((invoice) => (

@@ -1192,7 +1192,7 @@ button, .btn {
 .receipt-print-root hr { border: 0; border-top: 1px dashed #555; margin: 7px 0; }
 .receipt-logo { display: block; width: auto; max-width: 35mm; max-height: 12mm; margin: 0 auto 6px; object-fit: contain; }
 .receipt-item { margin: 5px 0; }
-.receipt-table-heading, .receipt-item-grid { display: grid; grid-template-columns: minmax(0, 1fr) 6mm 8mm 14mm; gap: .5mm; align-items: start; }
+.receipt-table-heading, .receipt-item-grid { display: grid; grid-template-columns: minmax(0, 1fr) 12mm 7mm 15mm; gap: .5mm; align-items: start; }
 .receipt-table-heading { margin-bottom: 4px; border-bottom: 1px dashed #555; padding-bottom: 3px; }
 .receipt-table-heading > :nth-child(2), .receipt-table-heading > :nth-child(3) { text-align: center; }
 .receipt-table-heading > :last-child { text-align: right; }
@@ -1200,6 +1200,7 @@ button, .btn {
 .receipt-item-grid > :nth-child(2), .receipt-item-grid > :nth-child(3) { text-align: center; overflow-wrap: anywhere; }
 .receipt-item-grid > :last-child { text-align: right; overflow-wrap: anywhere; }
 .receipt-item > small { display: block; overflow-wrap: anywhere; }
+.receipt-item-total { margin-top: 2px; text-align: right; }
 .receipt-print-root dl { margin: 6px 0; }
 .receipt-print-root dl > div { display: flex; align-items: baseline; gap: 5px; }
 .receipt-print-root dt, .receipt-print-root dd { min-width: 0; margin: 2px 0; overflow-wrap: anywhere; }
@@ -1221,9 +1222,9 @@ button, .btn {
 :root[data-theme='dark'] .variant-edit-row input { background: #0f172a; color: #e2e8f0; border-color: #475569; }
 :root[data-theme='dark'] .manual-payment-instructions { background: #0f172a; }
 
-@page {
+@page thermalReceipt {
   size: 58mm auto;
-  margin: 2mm;
+  margin: 0;
 }
 @media print {
   html, body, #root { width: 58mm !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: #fff !important; }
@@ -1231,7 +1232,8 @@ button, .btn {
   .receipt-preview-overlay { position: static !important; display: block !important; width: 58mm !important; height: auto !important; min-height: 0 !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; background: #fff !important; visibility: visible !important; }
   .receipt-preview-toolbar { display: none !important; }
   .receipt-print-root, .receipt-print-root * { visibility: visible !important; }
-  .receipt-print-root { position: relative !important; width: 48mm !important; min-height: 0 !important; margin: 0 !important; padding: 2mm 0 1mm !important; box-shadow: none !important; page-break-inside: auto; }
+  .receipt-print-root { page: thermalReceipt; position: relative !important; width: 48mm !important; min-height: 0 !important; margin: 0 !important; padding: 2mm 0 0 !important; box-shadow: none !important; page-break-inside: auto; }
+  .receipt-print-root .receipt-thanks { margin-bottom: 0 !important; padding-bottom: 0 !important; }
   .receipt-print-root .receipt-business-name { color: #000 !important; font-weight: 800 !important; }
   .receipt-print-root .receipt-customer { font-weight: 800 !important; }
 }

@@ -10,12 +10,56 @@ const receiptVariant = (item) => {
   return { size };
 };
 
+const propertyLabels = {
+  model: 'Model',
+  serialNumber: 'IMEI / Serial',
+  warranty: 'Warranty',
+  condition: 'Condition',
+  accessories: 'Accessories',
+  voltage: 'Voltage',
+  wattage: 'Wattage',
+  unitType: 'Unit type',
+  batchNumber: 'Batch number',
+  expiryDate: 'Expiry date',
+  purchaseUnit: 'Purchase unit',
+  saleUnit: 'Sale unit',
+  fabric: 'Fabric',
+  design: 'Design',
+  serviceDescription: 'Service',
+  pricingType: 'Pricing type',
+  duration: 'Duration',
+  repairCharges: 'Repair charges',
+};
+
+function receiptProperties(item, businessType) {
+  const details = item.productDetails || {};
+  const properties = [];
+  if (businessType === 'Mobile Shop' && details.industryDetails?.model) {
+    properties.push(['Model', details.industryDetails.model]);
+  }
+  if (details.brand) properties.push(['Brand', details.brand]);
+
+  if (businessType !== 'Clothing Shop') {
+    Object.entries(details.industryDetails || {}).forEach(([key, value]) => {
+      if (key === 'model' && businessType === 'Mobile Shop') return;
+      if (value === null || value === undefined || String(value).trim() === '') return;
+      if (typeof value === 'object' && !(value instanceof Date)) return;
+      if (key === 'repairCharges' && Number(value) === 0) return;
+      const label = propertyLabels[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, (letter) => letter.toUpperCase());
+      properties.push([label, value instanceof Date ? value.toLocaleDateString() : String(value)]);
+    });
+  }
+
+  return properties;
+}
+
 export default function ReceiptPreview({ invoice, payments = [], onClose, testMode = false }) {
   const [printNotice, setPrintNotice] = useState({ invoiceId: null, message: '' });
 
   if (!invoice) return null;
   const printMessage = printNotice.invoiceId === invoice._id ? printNotice.message : '';
   const business = invoice.businessId || {};
+  const businessType = business.type || '';
   const customer = invoice.customerId || {};
   const invoicePayments = payments.filter((payment) => String(payment.invoiceId) === String(invoice._id));
   const paymentMethods = [...new Set(invoicePayments.map((payment) => payment.method).filter(Boolean))];
@@ -50,18 +94,21 @@ export default function ReceiptPreview({ invoice, payments = [], onClose, testMo
         {customer.email && <p>{customer.email}</p>}
         <hr />
         <div className="receipt-items">
-          <div className="receipt-table-heading"><strong>ITEM</strong><strong>QTY</strong><strong>SIZE</strong><strong>PRICE</strong></div>
+          <div className="receipt-table-heading"><strong>ITEM</strong><strong>SIZE</strong><strong>QTY</strong><strong>PRICE</strong></div>
           {invoice.items?.map((item) => {
             const { size } = receiptVariant(item);
             return (
               <section className="receipt-item" key={item._id || `${item.productName}-${item.variantLabel}`}>
                 <div className="receipt-item-grid">
                   <strong>{item.productName}</strong>
-                  <span>{item.quantity}</span>
                   <span>{size || '—'}</span>
+                  <span>{item.quantity}</span>
                   <span>{Number(item.unitPrice || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                 </div>
-                {item.productDetails?.brand && <small>Brand: {item.productDetails.brand}</small>}
+                {receiptProperties(item, businessType).map(([label, value]) => (
+                  <small key={label}>{label}: {value}</small>
+                ))}
+                <small className="receipt-item-total">Total: {money(currency, item.lineTotal ?? Number(item.quantity) * Number(item.unitPrice))}</small>
               </section>
             );
           })}
