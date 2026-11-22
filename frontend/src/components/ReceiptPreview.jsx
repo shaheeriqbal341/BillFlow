@@ -4,13 +4,15 @@ import { Printer, X } from 'lucide-react';
 import { printReceiptInBrowser } from '../services/printerService';
 
 const money = (currency, value) =>
-  `${currency || 'PKR'} ${Number(value || 0).toLocaleString(
-    undefined,
-    {
+  `${currency || 'PKR'} ${formatAmount(value)}`;
+
+const formatAmount = (value) =>
+  Number(value || 0)
+    .toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }
-  )}`;
+    })
+    .replace(/\.00$/, '');
 
 const receiptVariant = (item) => {
   const variant = item.productDetails?.variant || {};
@@ -34,7 +36,7 @@ export default function ReceiptPreview({
     invoiceId: null,
     message: '',
   });
-
+ 
   if (!invoice) return null;
 
   const printMessage =
@@ -153,8 +155,6 @@ export default function ReceiptPreview({
           <p>Phone: {customer.phone}</p>
         )}
 
-        {customer.email && <p>{customer.email}</p>}
-
         <hr />
 
         <div className="receipt-items">
@@ -189,13 +189,7 @@ export default function ReceiptPreview({
                   <span>{item.quantity}</span>
 
                   <span>
-                    {Number(lineTotal).toLocaleString(
-                      undefined,
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )}
+                    {formatAmount(lineTotal)}
                   </span>
                 </div>
               </section>

@@ -1191,7 +1191,7 @@ button, .btn {
 .receipt-print-root p { margin: 2px 0; text-align: center; }
 .receipt-print-root hr { border: 0; border-top: 1px dashed #555; margin: 7px 0; }
 .receipt-logo { display: block; width: auto; max-width: 35mm; max-height: 12mm; margin: 0 auto 6px; object-fit: contain; }
-.receipt-item { margin: 5px 0; }
+.receipt-item { margin: 0; }
 .receipt-table-heading, .receipt-item-grid { display: grid; grid-template-columns: minmax(0, 1fr) 12mm 7mm 15mm; gap: .5mm; align-items: start; }
 .receipt-table-heading { margin-bottom: 4px; border-bottom: 1px dashed #555; padding-bottom: 3px; }
 .receipt-table-heading > :nth-child(2), .receipt-table-heading > :nth-child(3) { text-align: center; }
@@ -1199,8 +1199,6 @@ button, .btn {
 .receipt-item-grid > :first-child { min-width: 0; overflow-wrap: anywhere; }
 .receipt-item-grid > :nth-child(2), .receipt-item-grid > :nth-child(3) { text-align: center; overflow-wrap: anywhere; }
 .receipt-item-grid > :last-child { text-align: right; overflow-wrap: anywhere; }
-.receipt-item > small { display: block; overflow-wrap: anywhere; }
-.receipt-item-total { margin-top: 2px; text-align: right; }
 .receipt-print-root dl { margin: 6px 0; }
 .receipt-print-root dl > div { display: flex; align-items: baseline; gap: 5px; }
 .receipt-print-root dt, .receipt-print-root dd { min-width: 0; margin: 2px 0; overflow-wrap: anywhere; }
