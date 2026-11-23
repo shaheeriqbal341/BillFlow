@@ -8,6 +8,7 @@ import {
   Check,
   ChevronRight,
   CreditCard,
+  Download,
   FileText,
   Menu,
   Package,
@@ -219,6 +220,15 @@ export default function PublicHomePage() {
               <div className="public-hero-actions">
                 <Link to="/login?mode=register" className="public-primary-btn large">Get started <ArrowRight size={17} /></Link>
                 <a href="#product" className="public-secondary-btn">Explore BillFlow <ChevronRight size={17} /></a>
+                <a
+                  href="https://expo.dev/accounts/shaheeriqbal341/projects/billflow/builds/9ea86868-6968-4e08-8e0e-d78f47fbbcb4"
+                  className="public-secondary-btn public-android-download-btn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download size={16} aria-hidden="true" />
+                  Download Android App
+                </a>
               </div>
               <div className="public-hero-assurance"><ShieldCheck size={16} /> Protected business workspaces with role-based access</div>
             </div>
