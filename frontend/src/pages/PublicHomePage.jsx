@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import api from '../services/api';
+import ThemeToggle from '../components/ThemeToggle';
 
 const navigationLinks = [
   { label: 'Product', href: '#product' },
@@ -180,6 +181,8 @@ export default function PublicHomePage() {
             <Link to="/login" className="public-link-btn">Log in</Link>
             <Link to="/login?mode=register" className="public-primary-btn">Get started <ArrowRight size={16} /></Link>
           </div>
+
+          <ThemeToggle compact />
 
           <button
             type="button"
